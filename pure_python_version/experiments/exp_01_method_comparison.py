@@ -5,7 +5,7 @@ EXPERIMENT: Does RAG actually improve answers?
 
 We compare three approaches to answering the same question:
   Method 1:  No RAG — ask Claude directly from memory
-  Method 3a: Pure Python RAG — Claude finds split points, we cut the text
+  Method 2: Pure Python RAG — Claude finds split points, we cut the text
 
 For each method we measure:
   - Total time (seconds)

@@ -47,20 +47,20 @@ Rules:
 
 Document:
 <document>
-{full_text[:12000]} 
+{full_text} 
 </document>
 
 Split points:"""
 
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=1000,
+        max_tokens=1000,#sets the maximum length of Claude's response.
         temperature=0,
         messages=[{"role": "user", "content": prompt}]
     )
 
     raw = response.content[0].text.strip()
-    print(f"  Claude identified split points: {raw[:200]}...")
+    #print(f"  Claude identified split points: {raw[:200]}...")
 
     # Parse Claude's list, fallback to regex if ast fails
     import ast, re
@@ -69,7 +69,7 @@ Split points:"""
     except:
         split_points = re.findall(r'"([^"]+)"', raw)
 
-    print(f"  Total split points found: {len(split_points)}")
+    #print(f"  Total split points found: {len(split_points)}")
 
     # Cut the document at each split point
     chunks = []
