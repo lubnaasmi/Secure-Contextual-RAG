@@ -35,11 +35,12 @@ from rag import load_pdfs, claude_chunk, embed_chunks, build_faiss_index, is_saf
 
 # One client, one embedding model — shared across all methods
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
 EMBED_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
 
 # The same question is asked to every method — this is the control variable
 # Changing this question changes what we're testing
-TEST_QUESTION = "What is retrieval augmented generation?"
+TEST_QUESTION = "What specific claim does Bauerlein make about digital technology?"
 
 
 # ── Method 1: No RAG ──────────────────────────────────────────────
@@ -81,7 +82,7 @@ def method1_no_rag(question: str) -> dict:
     }
 
 
-# ── Method 3a: Pure Python — Claude Split Points ──────────────────
+# ── Method 2: Pure Python — Claude Split Points ──────────────────
 # RAG pipeline built entirely without LangChain
 # 
 # HOW IT WORKS:
@@ -97,9 +98,9 @@ def method1_no_rag(question: str) -> dict:
 #
 # EXPECTED: Slower and more expensive (multiple API calls + embedding),
 #   but answers should be more accurate and document-specific
-def method3a_claude_splitpoints(question: str, full_text: str) -> dict:
+def method2_claude_splitpoints(question: str, full_text: str) -> dict:
     print("\n" + "="*50)
-    print("METHOD 3a: PURE PYTHON — CLAUDE SPLIT POINTS")
+    print("METHOD 2: PURE PYTHON — CLAUDE SPLIT POINTS")
     print("="*50)
 
     # Start the clock — we time the entire pipeline end to end
@@ -133,7 +134,7 @@ def method3a_claude_splitpoints(question: str, full_text: str) -> dict:
     for chunk in retrieved_chunks:
         if not is_safe_input(chunk):
             return {
-                "method": "3a: Claude Split Points",
+                "method": "2: Claude Split Points",
                 "time": 0, "tokens": 0,
                 "answer": "BLOCKED: malicious content in document"
             }
@@ -171,7 +172,7 @@ Question: {question}"""
     print(f"  Answer:         {answer[:200]}...")
 
     return {
-        "method": "3a: Claude Split Points",
+        "method": "2: Claude Split Points",
         "time": elapsed,
         "retrieval_time": retrieval_time,
         "tokens": tokens,
@@ -205,6 +206,6 @@ if __name__ == "__main__":
 
     results = []
     results.append(method1_no_rag(TEST_QUESTION))
-    results.append(method3a_claude_splitpoints(TEST_QUESTION, full_text))
+    results.append(method2_claude_splitpoints(TEST_QUESTION, full_text))
 
     print_results(results)

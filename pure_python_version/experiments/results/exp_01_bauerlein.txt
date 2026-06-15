@@ -1,0 +1,68 @@
+Question: What specific claim does Bauerlein make about digital technology?
+
+Loading: 3_Humanizing_Pedagogy_Ch7.pdf
+Loading: 1_Four_Frameshifts_Ch1.pdf
+Done — 23,947 characters loaded
+
+==================================================
+METHOD 1: NO RAG
+==================================================
+  Time:   2.39s
+  Tokens: 177
+  Answer: I don't have enough context to answer your question accurately. You're asking about a specific claim by Bauerlein regarding digital technology, but I don't know which work you're referring to.
+
+Mark B...
+
+==================================================
+METHOD 2: PURE PYTHON — CLAUDE SPLIT POINTS
+==================================================
+
+==================================================
+STAGE 2: CLAUDE AGENTIC CHUNKING
+==================================================
+  Total chunks created: 4
+  Chunk 1: 6975 chars — '7
+CRITICALLY HUMAN: THE IMPORTANCE
+OF A HUMANIZING ETHIC IN
+...'
+  Chunk 2: 1708 chars — 'HUMANIZING PEDAGOGIES IN PRACTICE
+Joining a long tradition o...'
+  Chunk 3: 1630 chars — 'DEHUMANIZATION IN A DIGITAL AGE
+The above examples of humani...'
+  Chunk 4: 13630 chars — 'PROCEDURALIZED IDEOLOGIES
+Before continuing our discussion, ...'
+
+==================================================
+STAGE 3: EMBEDDING
+==================================================
+  Embedding 4 chunks...
+
+  Chunks embedded:    4
+  Vector dimensions:  384
+  Embedding time:     0.14s
+  Array shape:        (4, 384)
+
+==================================================
+STAGE 4: FAISS INDEXING
+==================================================
+  Index type:     IndexFlatL2
+  Vectors stored: 4
+  Dimensions:     384
+  Total time:     3.06s
+  Retrieval time: 0.027s
+  Chunks used:    4
+  Tokens:         5616
+  Answer:         According to the context, Bauerlein suggested that digital technology "stupefies young Americans" (2009)....
+
+
+============================================================
+EXPERIMENT RESULTS
+============================================================
+Method                             Time   Tokens
+------------------------------------------------------------
+No RAG                            2.39s      177  (retrieval: N/As)
+2: Claude Split Points            3.06s     5616  (retrieval: 0.027s)
+============================================================
+
+NOTE: Answer quality must be judged by reading the outputs above.
+Tokens = cost proxy. Lower = cheaper. Time = latency.
