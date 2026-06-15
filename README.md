@@ -1,62 +1,91 @@
+## Secure Contextual RAG Pipeline
 
-# Secure Contextual RAG Pipeline
+A secure RAG pipeline built in pure Python using the Anthropic API directly — no LangChain, no abstractions. The goal is to understand and measure every stage of the pipeline, and to experiment with using Claude itself as the chunking engine.
 
-A secure, context-aware RAG pipeline built in pure Python using the native Anthropic API. This project is configured as an empirical systems experiment comparing local parametric knowledge base lookups against an agentic-chunked, vector-indexed document retrieval engine.
 
-##  What I Did (Core Implementation)
-I bypassed heavy orchestration frameworks (like LangChain) to write a transparent, production-grade retrieval pipeline from scratch in raw Python. 
+### What This Does
 
-The pipeline implements:
-1. **Direct PDF Ingestion:** Uses `pdfplumber` to extract text streams page-by-page.
-2. **Agentic Boundary Detection:** Passes segmented document buffers to `claude-haiku-4-5-20251001` to identify explicit semantic and thematic split phrases.
-3. **Local Vector Math:** Transforms raw text chunks into 384-dimensional dense vectors using `sentence-transformers` (`all-MiniLM-L6-v2`) and a local `faiss-cpu` (IndexFlatL2) Euclidean distance index.
-4. **Targeted Security Filtering:** * Pre-scans incoming user strings for common adversarial instructions (`is_safe_input`).
-   * Wraps retrieved context strings in strict structural <untrusted_documents> XML tags to isolate raw data blocks from system prompts.
----
-
-## Current Empirical Test Results
-
-### Parameters
-* **Query:** *"What is retrieval augmented generation?"*
-* **Dataset:** Foundational RAG Research Paper (`RAG_NLP.pdf` — 62,602 characters)
-
-| Methodology | Pipeline Latency | Token Overhead | Retrieval Time | Response Profile & Grounding Accuracy |
-| :--- | :--- | :--- | :--- | :--- |
-| **Method 1: No RAG** | ~4.48s | 329 tokens | N/A | **High-Level / Generic:** Relies on Claude's internal parametric weights. Provides a clean but generalized textbook overview. |
-| **Method 2: Claude Split** | ~7.35s | 2,530 tokens | 0.038s | **Highly Academic / Grounded:** Captures verbatim non-parametric language directly from the source paper (*"fine-tuning approach that endows pre-trained, parametric-memory..."*). |
-
----
-
-#### The Red Flag: The `[:12000]` Hard-Slice Constraint
-
-During initial data inspection, a major structural asymmetry was discovered: **Chunk 11 contained 50,683 characters (over 80% of the entire paper)**, while Chunks 1–10 safely averaged ~1,500 characters.
-
-#### The Technical "Why"
-This failure mode was directly caused by an intentional safety gate on Line 50 of `rag.py`:
-
-`{full_text[:12000]}` 
-
+The pipeline has two phases:
 
  
-- **The Constraint:**  To prevent output token overflow and manage initial API token budgets, the ingest pipeline strictly truncated the document buffer passed to the Claude chunking loop at the first 12,000 characters.
-
-- **The Consequence:** Claude beautifully mapped out section splits for the Abstract, Introduction, and early Methodology layers because they sat inside that 12k buffer. However, because the rest of the text was physically cut off, the remaining 50k+ characters of the document fell into a final single, un-tokenized "tail accumulation" block.
-
-- **Downstream Cost:** When the vector index hits this mega-chunk, it forces the generator to ingest a massive payload, driving query token usage up to ~2,500 tokens and neutralizing the targeted extraction benefits of a RAG pipeline.
-
-###  Tech Stack
-
-* **LLM Engine:** Native Anthropic Client (`claude-haiku-4-5-20251001`)
-* **Embeddings:** `sentence-transformers` (`all-MiniLM-L6-v2`)
-* **Vector Store:** `faiss-cpu` (Direct Index Flat L2 optimization)
-* **PDF Parser:** `pdfplumber`
+ **Ingestion (runs once)**
 
 
+1. Load PDFs from a folder using pdfplumber
+2. Send the full document text to claude-haiku-4-5-20251001 to identify where major topic boundaries are — returning verbatim 15-20 word phrases marking each split point
+3. Cut the document at each phrase to produce semantic chunks
+4. Embed each chunk into a 384-dimensional vector using sentence-transformers (all-MiniLM-L6-v2)
+5. Store all vectors in a FAISS IndexFlatL2 index for similarity search
 
-###  Setup
-```bash
-pip install anthropic pdfplumber sentence-transformers faiss-cpu numpy
-export ANTHROPIC_API_KEY=your-key-here
-cd pure_python_version
-python rag.py
-```
+
+ **Query (runs per question)**
+
+
+1. Scan the question for prompt injection patterns (is_safe_input)
+2. Embed the question into the same vector space as the chunks
+3. FAISS retrieves the top-3 most similar chunks
+4. Scan retrieved chunks for injection patterns
+5. Send chunks to Claude wrapped in <untrusted_documents> tags with the question
+
+
+
+### Security Design
+
+Two independent layers:
+
+**Layer 1** — Blocklist filter: is_safe_input() scans both the user question and retrieved chunks for known injection phrases before anything reaches Claude.
+
+**Layer 2** — Structural isolation: Retrieved document content is wrapped in <untrusted_documents> XML tags. This signals to Claude at a structural level that the content is data, not instructions — independent of the blocklist.
+
+Both layers run on input AND on retrieved chunks, protecting against attacks hidden inside documents.
+
+
+**Experiment 01 — Does RAG Actually Improve Answers?**
+
+**Question:** "What specific claim does Bauerlein make about digital technology?"
+
+**Corpus:** 2 PDFs — 1_Four_Frameshifts_Ch1.pdf + 3_Humanizing_Pedagogy_Ch7.pdf (23,947 chars total)
+
+
+**Key Design Decision: Claude as Chunker**
+
+Instead of fixed-size character splitting, Claude reads the document and returns verbatim phrases (15-20 words) marking where topics change. The document is then cut at each phrase.
+
+Why this is interesting: It produces semantically coherent chunks rather than arbitrary cuts. A chunk about "Humanizing Pedagogies" won't be split mid-argument.
+
+**Known tradeoffs:**
+
+
+- Adds one API call per ingestion run
+- Phrase matching via .find() requires Claude to reproduce text exactly — longer phrases (15-20 words) are more reliable than short ones
+- Academic PDFs with LaTeX encoding (like arXiv papers) can have spacing issues in extracted text, making phrase matching harder
+- Small documents may produce only 1 chunk if Claude finds no major topic changes
+
+
+
+### Tech Stack
+
+LLManthropic — claude-haiku-4-5-20251001
+Embeddingssentence-transformers — all-MiniLM-L6-v2 (384-dim)
+Vector storefaiss-cpu — IndexFlatL2
+PDF parsingpdfplumber
+
+
+### Setup
+
+`pip install anthropic pdfplumber sentence-transformers faiss-cpu numpy
+export ANTHROPIC_API_KEY=your-key-here`
+
+### Run the pipeline:
+
+`cd pure_python_version
+python rag.py`
+
+### Run the experiment:
+
+bashcd pure_python_version/experiments
+python exp_01_method_comparison.py | tee results/exp_01_output.txt
+
+Add PDFs to the data/ folder. The pipeline loads all .pdf files from that directory automatically.
+
+
