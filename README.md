@@ -65,10 +65,10 @@ Why this is interesting: It produces semantically coherent chunks rather than ar
 
 ### Tech Stack
 
-LLManthropic — claude-haiku-4-5-20251001
-Embeddingssentence-transformers — all-MiniLM-L6-v2 (384-dim)
-Vector storefaiss-cpu — IndexFlatL2
-PDF parsingpdfplumber
+LLManthropic — claude-haiku-4-5-20251001 <br>
+Embeddingssentence-transformers — all-MiniLM-L6-v2 (384-dim) <br>
+Vector storefaiss-cpu — IndexFlatL2 <br>
+PDF parsingpdfplumber <br>
 
 
 ### Setup
@@ -89,3 +89,5 @@ python exp_01_method_comparison.py | tee results/exp_01_output.txt
 Add PDFs to the data/ folder. The pipeline loads all .pdf files from that directory automatically.
 
 
+> **Note:** PDFs are not included in this repo due to copyright. 
+> Add your own PDFs to the `data/` folder to run the pipeline.
