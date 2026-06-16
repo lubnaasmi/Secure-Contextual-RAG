@@ -91,3 +91,6 @@ Add PDFs to the data/ folder. The pipeline loads all .pdf files from that direct
 
 > **Note:** PDFs are not included in this repo due to copyright. 
 > Add your own PDFs to the `data/` folder to run the pipeline.
+
+**Active Research & Iteration Logs**
+I am actively treating this repository as an empirical laboratory to study the trade-offs of framework-less data pipelines
