@@ -1,0 +1,109 @@
+Question: What specific claim does Bauerlein make about digital technology?
+
+Loading: 3_Humanizing_Pedagogy_Ch7.pdf
+Loading: 1_Four_Frameshifts_Ch1.pdf
+Done — 23,947 characters loaded
+
+==================================================
+METHOD 1: NO RAG
+==================================================
+  Time:   2.36s
+  Tokens: 200
+  Answer: I don't have enough context to answer your question accurately, as I'm not sure which work by Mark Bauerlein you're referring to or which specific claim you're asking about.
+
+However, Bauerlein is bes...
+
+==================================================
+METHOD 2: PURE PYTHON — CLAUDE SPLIT POINTS
+==================================================
+
+==================================================
+STAGE 2: HYBRID AGENTIC + STRUCTURAL CHUNKING
+==================================================
+  [Safety Valve Activated] Sub-splitting a mega-chunk of 6975 characters...
+  [Sentence Fallback] Paragraph itself is 6975 chars — splitting by sentence...
+  [Safety Valve Activated] Sub-splitting a mega-chunk of 13630 characters...
+  [Sentence Fallback] Paragraph itself is 13630 chars — splitting by sentence...
+  Total final chunks created: 8
+  Chunk 1: 3848 chars — '7
+CRITICALLY HUMAN: THE IMPORTANCE
+OF A HUMANIZING ETHIC IN
+...'
+  Chunk 2: 3127 chars — 'In educational contexts, and schools in part icu l ar, such ...'
+  Chunk 3: 1708 chars — 'HUMANIZING PEDAGOGIES IN PRACTICE
+Joining a long tradition o...'
+  Chunk 4: 1630 chars — 'DEHUMANIZATION IN A DIGITAL AGE
+The above examples of humani...'
+  Chunk 5: 3871 chars — 'PROCEDURALIZED IDEOLOGIES
+Before continuing our discussion, ...'
+  Chunk 6: 3845 chars — 'New technology, media, and youth
+cultural forms threaten adu...'
+  Chunk 7: 3367 chars — 'The collection also describes relevant
+approaches, methods, ...'
+  Chunk 8: 2545 chars — 'It also absolves adult
+educational and public welfare instit...'
+
+==================================================
+STAGE 3: EMBEDDING
+==================================================
+  Embedding 8 chunks...
+
+  Chunks embedded:    8
+  Vector dimensions:  384
+  Embedding time:     0.19s
+  Array shape:        (8, 384)
+
+==================================================
+STAGE 4: FAISS INDEXING
+==================================================
+  Index type:     IndexFlatL2
+  Vectors stored: 8
+  Dimensions:     384
+  Total time:     2.79s
+  Retrieval time: 0.052s
+  Chunks used:    8
+  Tokens:         2504
+  Answer:         I don't know. The context provided does not mention Bauerlein or any specific claims made by Bauerlein about digital technology....
+
+
+============================================================
+EXPERIMENT RESULTS
+============================================================
+Method                             Time   Tokens
+------------------------------------------------------------
+No RAG                            2.36s      200  (retrieval: N/As)
+2: Claude Split Points            2.79s     2504  (retrieval: 0.052s)
+============================================================
+
+NOTE: Answer quality must be judged by reading the outputs above.
+Tokens = cost proxy. Lower = cheaper. Time = latency.
+
+
+
+Limitation:
+Structural fallback splitting can fragment retrievable context
+
+The hybrid chunking pipeline adds a safety valve that subdivides any 
+macro-chunk (from Claude's topic-boundary pass) that exceeds the size budget.
+When the macro-chunk has no paragraph breaks to split on, common in PDF text where pdfplumber 
+strips formatting — the valve falls back to splitting on sentence boundaries. This guarantees 
+no chunk exceeds the size limit, but the sentence split is purely structural, with no awareness of meaning.
+
+This tradeoff showed up directly in testing on the Bauerlein question 
+("What specific claim does Bauerlein make about digital technology?") 
+against the same 23,947-character corpus. Under the original chunking 
+(4 chunks, one 13,630-character mega-chunk left intact), the pipeline correctly 
+answered: "Bauerlein suggested that digital technology 'stupefies young Americans' (2009)," 
+using 5,616 tokens. Under the hybrid chunking with the sentence-level safety valve (8 chunks, 
+the same source text now split across 4 sub-chunks), the same question returned "I don't know. 
+The context provided does not contain any claims made by Bauerlein about digital technology," using 2,498 tokens.
+
+The fix reduced token cost by roughly 55% for this query, but cost retrieval accuracy on this specific question. 
+The likely cause is that the sentence-level split separated the Bauerlein reference from the surrounding context that 
+made it semantically retrievable as being "about digital technology" — once split, the relevant sub-chunk either ranked 
+outside the top-k results or no longer carried enough contextual signal for the embedding model to surface it.
+
+This is a direct illustration of the core RAG chunking tradeoff: smaller, size-compliant chunks are cheaper and reduce 
+noise, but aggressive structural splitting (as opposed to semantic splitting) risks breaking apart facts that depend on 
+their surrounding sentences for context. A possible next step is prepending a short context anchor (e.g. the original macro-chunk's heading)
+ to each sentence-split sub-chunk, so fragments retain a link back to their source topic even after being split.

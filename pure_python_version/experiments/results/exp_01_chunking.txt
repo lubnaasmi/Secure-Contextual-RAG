@@ -66,3 +66,10 @@ No RAG                            2.39s      177  (retrieval: N/As)
 
 NOTE: Answer quality must be judged by reading the outputs above.
 Tokens = cost proxy. Lower = cheaper. Time = latency.
+
+
+Limitation: 
+
+unbounded chunk size (no upper bound on Claude's topic-detection output, 
+producing that 13,630-char chunk, which raises token cost and embedding-precision 
+risk even though it answered correctly here).
