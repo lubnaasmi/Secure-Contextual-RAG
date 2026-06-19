@@ -1,0 +1,48 @@
+Loading weights: 100%|██████████████████████████████████████████| 103/103 [00:00<00:00, 14851.94it/s]
+Loading: 3_Humanizing_Pedagogy_Ch7.pdf
+Loading: 1_Four_Frameshifts_Ch1.pdf
+Done — 23,947 characters loaded
+
+==================================================
+METHOD 3: CAG — CACHED FULL DOCUMENT (NO CHUNKING)
+==================================================
+  Time:               1.12s
+  Tokens (total):     80
+  Cache written:      5930 tokens
+  Cache read (reuse): 0 tokens
+  Answer:             According to the context, Bauerlein claims that digital technology "stupefies young Americans."...
+
+==================================================
+METHOD 3: CAG — CACHED FULL DOCUMENT (NO CHUNKING)
+==================================================
+  Time:               4.48s
+  Tokens (total):     361
+  Cache written:      0 tokens
+  Cache read (reuse): 5930 tokens
+  Answer:             Based on the context, a humanizing ethic in education involves the following key elements:
+
+1. **Honoring students' cultures and identities**: Humanizing pedagogies "honor the cultures and linguistic ...
+
+
+============================================================
+EXPERIMENT RESULTS
+============================================================
+Method                             Time   Tokens
+------------------------------------------------------------
+3: CAG (Cached Full Doc)          1.12s       80
+3: CAG (Cached Full Doc)          4.48s      361
+============================================================
+
+Q1's real total isn't 80 tokens, it's 80 + 5,930 = 6,010 tokens processed; 
+Q2's real total isn't 361, it's 361 + 5,930 = 6,291
+
+NOTE: Answer quality must be judged by reading the outputs above.
+Tokens = cost proxy. Lower = cheaper. Time = latency.
+Watch 'Cache written' on Q1 vs 'Cache read' on Q2 — that gap
+is the whole point of this experiment.
+
+
+CAG's real limits:
+context-window ceiling (doesn't scale to large corpora),
+cache economics (only pays off across multiple questions per session, not one-off queries), and scope (solves static/cold data only, 
+not dynamic/hot data,  RAG is still needed there).
